@@ -1,0 +1,32 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgres://exhibition:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/exhibition
+      INERTIA_SSR: ${INERTIA_SSR:-false}
+      TOKEN_TTL_DAYS: ${TOKEN_TTL_DAYS:-30}
+      APP_NAME: ${APP_NAME:-Exhibition}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: exhibition
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: exhibition
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U exhibition -d exhibition"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  db-data:

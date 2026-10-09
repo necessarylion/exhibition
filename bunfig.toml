@@ -1,0 +1,3 @@
+[test]
+# tsyringe needs this loaded before any decorated class.
+preload = ["reflect-metadata"]

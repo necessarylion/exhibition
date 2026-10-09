@@ -1,0 +1,34 @@
+{
+  "name": "exhibition",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch app/index.ts",
+    "dev:vite": "vite",
+    "build": "vite build && vite build --ssr resources/js/ssr.ts --outDir dist/ssr",
+    "start": "NODE_ENV=production bun app/index.ts",
+    "migrate": "bun database/migrate.ts",
+    "test": "bun test",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/swagger-ui": "^0.6.1",
+    "@hono/zod-openapi": "^1.6.3",
+    "@inertiajs/vue3": "^3.8.0",
+    "edge.js": "^6.5.1",
+    "hono": "^4.13.13",
+    "reflect-metadata": "^0.2.2",
+    "tsyringe": "^4.10.0",
+    "vue": "^3.5.43",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@types/bun": "^1.4.2",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}
