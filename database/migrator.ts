@@ -2,14 +2,36 @@ import { SQL } from "bun";
 
 export const MIGRATIONS_DIR = new URL("./migrations", import.meta.url).pathname;
 
+/** Any fixed number. Every server of this app asks PostgreSQL for the same lock. */
+const MIGRATION_LOCK_ID = 7_201_511;
+
 export class Migrator {
   constructor(
     private readonly sql: SQL,
     private readonly dir: string = MIGRATIONS_DIR,
   ) {}
 
-  /** Runs every migration file that has not run yet. Returns their names. */
+  /**
+   * Runs every migration file that has not run yet. Returns their names.
+   * On PostgreSQL only one server migrates at a time. A second server that starts at the
+   * same moment waits here, and then finds nothing left to do.
+   */
   async run(): Promise<string[]> {
+    if (this.sql.options.adapter !== "postgres") {
+      return this.migrate();
+    }
+    // The lock belongs to one connection, so that connection is kept until the end.
+    const connection = await this.sql.reserve();
+    try {
+      await connection`SELECT pg_advisory_lock(${MIGRATION_LOCK_ID})`;
+      return await this.migrate();
+    } finally {
+      await connection`SELECT pg_advisory_unlock(${MIGRATION_LOCK_ID})`;
+      connection.release();
+    }
+  }
+
+  private async migrate(): Promise<string[]> {
     await this.sql`
       CREATE TABLE IF NOT EXISTS migrations (
         name TEXT PRIMARY KEY,
@@ -41,8 +63,26 @@ export class Migrator {
     const appliedAt = new Date().toISOString();
     // One transaction per file. A failed file leaves nothing behind.
     await this.sql.begin(async (tx) => {
-      await tx.unsafe(content);
+      for (const statement of this.splitStatements(content)) {
+        await tx.unsafe(statement);
+      }
       await tx`INSERT INTO migrations (name, applied_at) VALUES (${name}, ${appliedAt})`;
     });
+  }
+
+  /**
+   * Each statement runs alone. When a whole file is sent in one call, the SQLite driver
+   * of Bun skips the statements after an ALTER TABLE and reports no error.
+   */
+  // ponytail: this splits on ";". A migration must not have ";" inside a text value.
+  // Use a real SQL parser if a migration ever needs that.
+  private splitStatements(content: string): string[] {
+    const statements: string[] = [];
+    for (const part of content.replace(/^\s*--.*$/gm, "").split(";")) {
+      if (part.trim() !== "") {
+        statements.push(part.trim());
+      }
+    }
+    return statements;
   }
 }

@@ -13,3 +13,8 @@ export function resolvePage(name: string): DefineComponent {
   }
   return page;
 }
+
+/** The text of the browser tab: the page, then the name of the app. */
+export function pageTitle(title: string): string {
+  return title ? `${title} · Exhibition` : "Exhibition";
+}

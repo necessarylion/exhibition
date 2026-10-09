@@ -8,6 +8,13 @@ services:
       INERTIA_SSR: ${INERTIA_SSR:-false}
       TOKEN_TTL_DAYS: ${TOKEN_TTL_DAYS:-30}
       APP_NAME: ${APP_NAME:-Exhibition}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-10}
+      RATE_LIMIT_IP_MAX: ${RATE_LIMIT_IP_MAX:-50}
+      RATE_LIMIT_EMAIL_MAX: ${RATE_LIMIT_EMAIL_MAX:-100}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-0}
+      API_DOCS: ${API_DOCS:-false}
+    volumes:
+      - uploads:/app/storage
     depends_on:
       db:
         condition: service_healthy
@@ -30,3 +37,4 @@ services:
 
 volumes:
   db-data:
+  uploads:

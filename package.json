@@ -3,20 +3,24 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --watch app/index.ts",
-    "dev:vite": "vite",
+    "dev": "trap 'kill 0' EXIT; vite & bun --watch app/index.ts",
     "build": "vite build && vite build --ssr resources/js/ssr.ts --outDir dist/ssr",
     "start": "NODE_ENV=production bun app/index.ts",
     "migrate": "bun database/migrate.ts",
+    "create-admin": "bun database/create-admin.ts",
+    "seed": "bun database/seed.ts",
     "test": "bun test",
+    "test:pg": "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgres://postgres:postgres@localhost:5433/exhibition_test} bun test",
     "lint": "biome check .",
     "format": "biome check --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && node scripts/typecheck-vue.cjs --noEmit"
   },
   "dependencies": {
-    "@hono/swagger-ui": "^0.6.1",
+    "@fontsource-variable/manrope": "^5.3.0",
     "@hono/zod-openapi": "^1.6.3",
     "@inertiajs/vue3": "^3.8.0",
+    "@lucide/vue": "^1.53.0",
+    "@scalar/hono-api-reference": "^0.12.11",
     "edge.js": "^6.5.1",
     "hono": "^4.13.13",
     "reflect-metadata": "^0.2.2",
@@ -29,6 +33,8 @@
     "@types/bun": "^1.4.2",
     "@vitejs/plugin-vue": "^6.0.9",
     "typescript": "^7.0.2",
-    "vite": "^8.3.4"
+    "typescript-6": "npm:typescript@^6.0.2",
+    "vite": "^8.3.4",
+    "vue-tsc": "^3.3.12"
   }
 }

@@ -12,10 +12,16 @@ export class ErrorHandler {
   /** Turns any thrown error into the JSON error shape. */
   handle(error: Error, c: Context): Response {
     if (error instanceof AppError) {
-      return c.json({ error: { code: error.code, message: error.message } }, error.status);
+      return c.json(
+        { error: { code: error.code, message: error.message } },
+        error.status,
+        error.headers,
+      );
     }
+    // Hono throws it, for example for a JSON body that cannot be read.
     if (error instanceof HTTPException) {
-      return error.getResponse();
+      const code = error.status === 413 ? ErrorCode.BodyTooLarge : ErrorCode.BadRequest;
+      return c.json({ error: { code, message: this.sentence(error.message) } }, error.status);
     }
     console.error(error);
     return c.json({ error: { code: ErrorCode.Internal, message: "Something went wrong." } }, 500);
@@ -30,10 +36,17 @@ export class ErrorHandler {
     for (const issue of result.error.issues) {
       details.push({ path: issue.path.join("."), message: issue.message });
     }
-    return c.json(
-      { error: { code: ErrorCode.ValidationFailed, message: "The input is not valid.", details } },
-      422,
-    );
+    // Every message is a plain sentence with the label of its field. The first one is
+    // also the main message, so a page can show it as it is.
+    const message = details[0]?.message ?? "The input is not valid.";
+    return c.json({ error: { code: ErrorCode.ValidationFailed, message, details } }, 422);
+  }
+
+  private sentence(message: string): string {
+    if (message === "") {
+      return "The request is not valid.";
+    }
+    return message.endsWith(".") ? message : `${message}.`;
   }
 
   notFound(c: Context): Response {

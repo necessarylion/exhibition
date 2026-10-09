@@ -1,5 +1,6 @@
 import { createInertiaApp } from "@inertiajs/vue3";
+import "@fontsource-variable/manrope";
 import "./app.css";
-import { resolvePage } from "./resolve-page";
+import { pageTitle, resolvePage } from "./resolve-page";
 
-createInertiaApp({ resolve: resolvePage });
+createInertiaApp({ resolve: resolvePage, title: pageTitle });
