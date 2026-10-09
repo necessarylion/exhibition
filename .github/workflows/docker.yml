@@ -4,10 +4,25 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+  # A pull request runs the checks only. It does not push an image.
+  pull_request:
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: exhibition_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -17,9 +32,16 @@ jobs:
       - run: bun run lint
       - run: bun run typecheck
       - run: bun test
+      # The same tests again on PostgreSQL, the database of production.
+      - run: bun test
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/exhibition_test
+      # A Vue file that does not compile is found here, not in the image build.
+      - run: bun run build
 
   push:
     needs: test
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: read

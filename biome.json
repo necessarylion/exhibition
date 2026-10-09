@@ -12,6 +12,15 @@
   },
   "overrides": [
     {
+      "includes": ["resources/js/app.css"],
+      "linter": {
+        "rules": {
+          "style": { "noDescendingSpecificity": "off" },
+          "complexity": { "noImportantStyles": "off" }
+        }
+      }
+    },
+    {
       "includes": ["**/*.vue"],
       "linter": {
         "rules": {

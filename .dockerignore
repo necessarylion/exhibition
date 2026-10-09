@@ -7,3 +7,4 @@ dist
 *.sqlite-*
 tests
 README.md
+storage
